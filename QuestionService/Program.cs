@@ -1,5 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using QuestionService.Data;
+using QuestionService.Services;
+using Wolverine;
+using Wolverine.RabbitMQ;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +14,9 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.AddServiceDefaults();
 
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<TagService>();
+
 builder.Services.AddAuthentication()
     .AddKeycloakJwtBearer(serviceName: "keycloak", realm: "overflow", options =>
     {
@@ -17,6 +25,19 @@ builder.Services.AddAuthentication()
     });
 
 builder.AddNpgsqlDbContext<QuestionDbContext>("questiondb");
+
+builder.Services.AddOpenTelemetry().WithTracing(traceProviderBuilder =>
+{
+    traceProviderBuilder.SetResourceBuilder(ResourceBuilder.CreateDefault()
+        .AddService(builder.Environment.ApplicationName))
+        .AddSource("Wolverine");
+});
+
+builder.Host.UseWolverine(options =>
+{
+    options.UseRabbitMqUsingNamedConnection("messaging").AutoProvision();
+    options.PublishAllMessages().ToRabbitExchange("questions");
+});
 
 var app = builder.Build();
 
