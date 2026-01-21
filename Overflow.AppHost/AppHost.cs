@@ -71,6 +71,10 @@ var yarp = builder.AddYarp("gateway")
     .WithEnvironment("VIRTUAL_PORT", "8001");
     //.WithExternalHttpEndpoints();
 
+    var webapp = builder.AddJavaScriptApp("webapp", "../webapp")
+        .WithReference(keycloak)
+        .WithHttpEndpoint(env: "PORT", port: 3000);
+
     if (!builder.Environment.IsDevelopment())
     {
         builder.AddContainer("nginx-proxy", "nginxproxy/nginx-proxy", "1.9")
