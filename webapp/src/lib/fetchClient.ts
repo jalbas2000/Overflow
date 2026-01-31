@@ -1,4 +1,5 @@
 import {notFound} from "next/dist/client/components/not-found";
+import {auth} from "@/auth";
 
 
 export async function fetchClient<T>(
@@ -10,8 +11,12 @@ export async function fetchClient<T>(
     
     if (!apiUrl) throw new Error('Missing API URL');
     
+    const session = await auth();
+    
+    
     const headers: HeadersInit = {
         'Content-Type': 'application/json',
+        ...(session?.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {}),
         ...(rest.headers || {})
     };
     
@@ -30,17 +35,30 @@ export async function fetchClient<T>(
     if(!response.ok) {
         if(response.status === 404) return notFound();
         if(response.status === 500) throw new Error('Server error. Please try again later.');
+        
         let message = '';
         
-        if(typeof parsed === 'string') {
-            message = parsed;
-        } else if (parsed?.message) {
-            message = parsed?.message;
+        if(response.status === 401) {
+            const authHeader = response.headers.get('WWW-Authenticate');
+            if(authHeader?.includes('error_description')) {
+                const match = authHeader?.match(/error_description="(.+?)"/);
+                if(match) {
+                    message = match[1];
+                } 
+            } else {
+                message = "You must be logged in to do that.";
+            }
         }
         
         if(!message) {
-            message = getFallbackMessage(response.status);
-        }  
+            if(typeof parsed === 'string') {
+                message = parsed;
+            } else if (parsed?.message) {
+                message = parsed?.message;
+            } else {
+                message = getFallbackMessage(response.status);
+            }
+        }
         
         return {data: null, error: {message, status: response.status}};
     }
@@ -51,7 +69,6 @@ export async function fetchClient<T>(
 function getFallbackMessage(status: number) {
     switch (status) {
         case 400: return 'Bad Request. Please check your input';
-        case 401: return 'You must be logged in';
         case 403: return 'You don not have permission to access this resource.';
         case 500: return 'Server error. Please try again later';
         default: return 'An unexpected error occurred. please try again later';

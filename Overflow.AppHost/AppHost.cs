@@ -56,20 +56,19 @@ var searchService = builder.AddProject<Projects.SearchService>("search-svc")
     .WaitFor(rabbitmq);
 
 var yarp = builder.AddYarp("gateway")
-    .WithHostPort(8001)
+    .WithHostPort(8001) // Comment for docker
     .WithConfiguration(yarpBuilder =>
     {
         yarpBuilder.AddRoute("/questions/{**catch-all}", questionService);
+        yarpBuilder.AddRoute("/test/{**catch-all}", questionService);
         yarpBuilder.AddRoute("/tags/{**catch-all}", questionService);
         yarpBuilder.AddRoute("/search/{**catch-all}", searchService);
-
     })
-    //.WithHostPort(8001) // Comment for docker
+    //.WithEndpoint(port: 8001, scheme: "http", targetPort: 8001, name: "gateway", isExternal: true) // Uncomment for docker
     .WithEnvironment("ASPNETCORE_URLS", "http://*:8001")
-    .WithEndpoint(port: 8001, scheme: "http", targetPort: 8001, name: "gateway", isExternal: true)
     .WithEnvironment("VIRTUAL_HOST", "api.overflow.local")
-    .WithEnvironment("VIRTUAL_PORT", "8001");
-    //.WithExternalHttpEndpoints();// Comment for docker
+    .WithEnvironment("VIRTUAL_PORT", "8001")
+    .WithExternalHttpEndpoints();// Comment for docker
 
     var webapp = builder.AddJavaScriptApp("webapp", "../webapp")
         .WithReference(keycloak)
