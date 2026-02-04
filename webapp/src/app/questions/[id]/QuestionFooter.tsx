@@ -9,7 +9,7 @@ type Props = {
 }
 export default function QuestionFooter({ question }: Props) {
     return (
-        <div className="flex justify-between mt-2">
+        <div className="flex justify-between mt-2 w-full">
             <div className="flex flex-col self-end">
                 <div className="flex gap-2">
                     {question.tagSlugs.map((tag: string) => (
