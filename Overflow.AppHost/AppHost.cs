@@ -70,15 +70,24 @@ var yarp = builder.AddYarp("gateway")
     .WithEnvironment("VIRTUAL_PORT", "8001")
     .WithExternalHttpEndpoints();// Comment for docker
 
-    var webapp = builder.AddJavaScriptApp("webapp", "../webapp")
-        .WithReference(keycloak)
-        .WithHttpEndpoint(env: "PORT", port: 3000);
+var webapp = builder.AddJavaScriptApp("webapp", "../webapp")
+    .WithReference(keycloak)
+    .WithHttpEndpoint(env: "PORT", port: 3000, targetPort: 4000)
+    .WithExternalHttpEndpoints()
+    .WithEnvironment("VIRTUAL_HOST", "app.overflow.local")
+    .WithEnvironment("VIRTUAL_PORT", "4000")
+    .PublishAsDockerFile();
 
     if (!builder.Environment.IsDevelopment())
     {
         builder.AddContainer("nginx-proxy", "nginxproxy/nginx-proxy", "1.9")
             .WithEndpoint(80, 80, "nginx", isExternal: true)
-            .WithBindMount("/var/run/docker.sock", "/tmp/docker.sock", true);
+            .WithEndpoint(443, 443, "nginx-ssl", isExternal: true)
+            .WithBindMount("/var/run/docker.sock", "/tmp/docker.sock", true)
+            .WithBindMount("../infra/devcerts", "/etc/nginx/certs", true);
+        
+        keycloak.WithEnvironment("KC_HOSTNAME", "https://id.overflow.local")
+            .WithEnvironment("KC_HOSTNAME_BACKCHANNEL_DYNAMIC", "true");
     }
 
 

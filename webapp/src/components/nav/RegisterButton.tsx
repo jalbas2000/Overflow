@@ -1,9 +1,10 @@
 import {Button} from "@heroui/button";
+import {authConfig} from "@/lib/config";
 
 export default function RegisterButton() {
-    const clientId = process.env.AUTH_KEYCLOAK_ID;
-    const issuer = process.env.AUTH_KEYCLOAK_ISSUER;
-    const redirectUrl = process.env.AUTH_URL;
+    const clientId = authConfig.kcClientId;
+    const issuer = authConfig.kcIssuer;
+    const redirectUrl = authConfig.authUrl;
     
     const registerUrl = `${issuer}/protocol/openid-connect/registrations` +
         `?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUrl!)}` +

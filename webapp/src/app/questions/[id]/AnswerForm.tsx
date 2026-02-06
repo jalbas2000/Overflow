@@ -5,12 +5,12 @@ import {zodResolver} from "@hookform/resolvers/zod";
 import {AnswerSchema, answerSchema} from "@/lib/schemas/answerSchema";
 import {Controller, useForm} from "react-hook-form";
 import {editAnswer, postAnswer} from "@/lib/actions/question-actions";
-import {Answer} from "@/lib/types";
 import {handleError} from "@/lib/util";
-import {Form} from "@heroui/form";
-import RichTextEditor from "@/components/rte/RichTextEditor";
 import {Button} from "@heroui/button";
 import {useAnswerStore} from "@/lib/hooks/useAnswerStore";
+import dynamic from "next/dynamic";
+
+const RichTextEditor = dynamic(() => import('@/components/rte/RichTextEditor'), {ssr: false});
 
 type Props = {
     questionId: string;
